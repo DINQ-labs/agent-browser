@@ -28,6 +28,7 @@ import {
   decryptData,
   ENCRYPTION_KEY_ENV,
 } from './state-utils.js';
+import { isWebglStealthEnabled, WEBGL_STEALTH_INIT_SCRIPT } from './stealth-webgl.js';
 
 /**
  * Returns the default Playwright timeout in milliseconds for standard operations.
@@ -1474,6 +1475,9 @@ export class BrowserManager {
     }
 
     context.setDefaultTimeout(getDefaultTimeout());
+    if (isWebglStealthEnabled()) {
+      await context.addInitScript(WEBGL_STEALTH_INIT_SCRIPT);
+    }
     this.contexts.push(context);
     this.setupContextTracking(context);
     await this.ensureDomainFilter(context);

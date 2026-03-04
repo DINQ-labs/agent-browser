@@ -2481,6 +2481,7 @@ Environment:
   AGENT_BROWSER_EXECUTABLE_PATH  Custom browser executable path
   AGENT_BROWSER_EXTENSIONS       Comma-separated browser extension paths
   AGENT_BROWSER_HEADED           Show browser window (not headless)
+  AGENT_BROWSER_STEALTH_WEBGL    Spoof WebGL vendor/renderer when SwiftShader is detected (default: enabled)
   AGENT_BROWSER_JSON             JSON output
   AGENT_BROWSER_FULL             Full page screenshot
   AGENT_BROWSER_ANNOTATE         Annotated screenshot with numbered labels and legend

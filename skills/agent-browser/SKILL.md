@@ -44,6 +44,11 @@ agent-browser open https://example.com && agent-browser wait --load networkidle 
 
 **When to chain:** Use `&&` when you don't need to read the output of an intermediate command before proceeding (e.g., open + wait + screenshot). Run commands separately when you need to parse the output first (e.g., snapshot to discover refs, then interact using those refs).
 
+## Stealth Notes
+
+- For best anti-detection results in Linux servers/containers, prefer `--headed` (run under Xvfb if no display is available).
+- WebGL SwiftShader fingerprints can trigger bot detection. agent-browser spoofs WebGL vendor/renderer when SwiftShader is detected by default; disable with `AGENT_BROWSER_STEALTH_WEBGL=0` if it causes issues on a specific site.
+
 ## Essential Commands
 
 ```bash

@@ -499,6 +499,14 @@ This is useful for multimodal AI models that can reason about visual layout, unl
 | `--config <path>` | Use a custom config file (or `AGENT_BROWSER_CONFIG` env) |
 | `--debug` | Debug output |
 
+### Stealth (WebGL)
+
+In some virtualized Linux environments, Chromium reports the WebGL renderer as SwiftShader, which can trigger bot detection checks. When SwiftShader is detected, agent-browser spoofs the WebGL vendor/renderer values in page scripts.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `AGENT_BROWSER_STEALTH_WEBGL` | Enable WebGL vendor/renderer spoofing when SwiftShader is detected. Set to `0`, `false`, or `no` to disable. | enabled |
+
 ## Configuration
 
 Create an `agent-browser.json` file to set persistent defaults instead of repeating flags on every command.

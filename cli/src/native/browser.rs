@@ -8,6 +8,7 @@ use super::cdp::chrome::{
 };
 use super::cdp::client::CdpClient;
 use super::cdp::types::*;
+use super::stealth;
 
 // ---------------------------------------------------------------------------
 // Launch validation
@@ -185,6 +186,17 @@ impl BrowserManager {
                     "Browser.setDownloadBehavior",
                     Some(json!({ "behavior": "allow", "downloadPath": path })),
                     None,
+                )
+                .await;
+        }
+
+        if stealth::webgl_stealth_enabled() {
+            let _ = manager
+                .client
+                .send_command(
+                    "Page.addScriptToEvaluateOnNewDocument",
+                    Some(json!({ "source": stealth::WEBGL_STEALTH_INIT_SCRIPT })),
+                    Some(&session_id),
                 )
                 .await;
         }
