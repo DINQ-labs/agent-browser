@@ -1,0 +1,67 @@
+# HTTP Bridge
+
+The HTTP bridge runs agent-browser as a long-lived service and exposes a small JSON API for:
+
+- Creating isolated browser sessions
+- Sending commands to a specific session over HTTP
+
+It manages one daemon per session and forwards commands over the same JSON socket protocol the CLI uses.
+
+## Run Locally
+
+```bash
+cd bridge
+pnpm install
+pnpm run build
+BRIDGE_PORT=3000 pnpm start
+```
+
+## Docker
+
+Build from the repository root:
+
+```bash
+docker build -t agent-browser-bridge .
+docker run --rm -p 3000:3000 agent-browser-bridge
+```
+
+The container starts an embedded Xvfb server so `headless: false` sessions work without a real display.
+
+## API
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Path</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET</code></td><td><code>/health</code></td><td>Health + uptime + session counts.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/sessions</code></td><td>List active sessions.</td></tr>
+    <tr><td><code>POST</code></td><td><code>/sessions</code></td><td>Create a new session.</td></tr>
+    <tr><td><code>DELETE</code></td><td><code>/sessions/:id</code></td><td>Close a session.</td></tr>
+    <tr><td><code>POST</code></td><td><code>/sessions/:id/commands</code></td><td>Send a command to a session.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/sessions/:id/cookies</code></td><td>Get cookies (<code>?urls=a,b</code> optional).</td></tr>
+    <tr><td><code>POST</code></td><td><code>/sessions/:id/cookies</code></td><td>Set cookies.</td></tr>
+    <tr><td><code>GET</code></td><td><code>/sessions/:id/state</code></td><td>Export <code>storageState</code> as JSON.</td></tr>
+  </tbody>
+</table>
+
+### Example (curl)
+
+```bash
+curl -s http://localhost:3000/health
+
+curl -s -X POST http://localhost:3000/sessions \
+  -H 'Content-Type: application/json' \
+  -d '{"session":"t1","headless":true}'
+
+curl -s -X POST http://localhost:3000/sessions/t1/commands \
+  -H 'Content-Type: application/json' \
+  -d '{"action":"navigate","url":"https://example.com"}'
+
+curl -s -X POST http://localhost:3000/sessions/t1/commands \
+  -H 'Content-Type: application/json' \
+  -d '{"action":"title"}'
+
+curl -s -X DELETE http://localhost:3000/sessions/t1
+```
+

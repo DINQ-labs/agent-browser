@@ -34,6 +34,7 @@ export const navigation: NavSection[] = [
       { name: "Diffing", href: "/diffing" },
       { name: "CDP Mode", href: "/cdp-mode" },
       { name: "Streaming", href: "/streaming" },
+      { name: "HTTP Bridge", href: "/http-bridge" },
       { name: "Profiler", href: "/profiler" },
       { name: "iOS Simulator", href: "/ios" },
       { name: "Security", href: "/security" },

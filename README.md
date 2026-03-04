@@ -89,6 +89,28 @@ agent-browser fill "#email" "test@example.com"
 agent-browser find role button click --name "Submit"
 ```
 
+## HTTP Bridge
+
+The `bridge/` package runs agent-browser as an HTTP service and forwards requests to per-session daemons over the agent-browser socket protocol.
+
+### Run locally
+
+```bash
+cd bridge
+pnpm install
+pnpm run build
+BRIDGE_PORT=3000 pnpm start
+```
+
+### Docker
+
+```bash
+docker build -t agent-browser-bridge .
+docker run --rm -p 3000:3000 agent-browser-bridge
+```
+
+See the docs page for endpoints and examples: https://agent-browser.dev/http-bridge
+
 ## Commands
 
 ### Core Commands

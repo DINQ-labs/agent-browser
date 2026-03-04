@@ -49,6 +49,10 @@ agent-browser open https://example.com && agent-browser wait --load networkidle 
 - For best anti-detection results in Linux servers/containers, prefer `--headed` (run under Xvfb if no display is available).
 - WebGL SwiftShader fingerprints can trigger bot detection. agent-browser spoofs WebGL vendor/renderer when SwiftShader is detected by default; disable with `AGENT_BROWSER_STEALTH_WEBGL=0` if it causes issues on a specific site.
 
+## HTTP Bridge
+
+For non-shell callers (e.g., Python services), use the HTTP bridge in `bridge/` to create sessions and send commands over HTTP. Prefer the CLI directly when you can, since it has the most complete UX and examples.
+
 ## Essential Commands
 
 ```bash
