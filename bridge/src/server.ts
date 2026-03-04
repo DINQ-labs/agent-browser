@@ -73,6 +73,38 @@ app.post('/sessions/:id/commands', async (req: Request, res: Response) => {
       res.status(400).json({ error: 'action is required' });
       return;
     }
+
+    // Remote-friendly screenshots: the daemon writes to a file path, which is not accessible
+    // to the HTTP caller. When `encoding: "base64"` is requested, write to a temp file,
+    // read it back, and return the bytes inline.
+    if (command.action === 'screenshot' && command.encoding === 'base64') {
+      const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'agent-browser-bridge-shot-'));
+      try {
+        const format = typeof command.format === 'string' ? command.format : 'png';
+        const ext = format === 'jpeg' ? 'jpg' : format;
+        const screenshotPath = path.join(tempDir, `screenshot.${ext}`);
+
+        const cmdToSend: CommandRequest = { ...command, path: screenshotPath };
+        delete (cmdToSend as Record<string, unknown>).encoding;
+
+        const result = await manager.sendCommand(req.params.id, cmdToSend);
+        if (!result.success) {
+          res.json(result);
+          return;
+        }
+
+        const bytes = await fs.readFile(screenshotPath);
+        const data = { ...(result.data || {}) } as Record<string, unknown>;
+        delete data.path;
+        data.screenshot = bytes.toString('base64');
+
+        res.json({ ...result, data });
+        return;
+      } finally {
+        await fs.rm(tempDir, { recursive: true, force: true });
+      }
+    }
+
     const result = await manager.sendCommand(req.params.id, command);
     res.json(result);
   } catch (err: unknown) {
@@ -168,4 +200,3 @@ function shutdown(signal: string) {
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
-

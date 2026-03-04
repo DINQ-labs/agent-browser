@@ -56,3 +56,6 @@ docs/package-lock.json
 
 # pnpm
 .pnpm-store/
+
+# Node runtime cache
+node-compile-cache/

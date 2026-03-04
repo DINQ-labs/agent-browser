@@ -111,6 +111,18 @@ docker run --rm -p 3000:3000 agent-browser-bridge
 
 See the docs page for endpoints and examples: https://agent-browser.dev/http-bridge
 
+### Screenshot bytes (base64)
+
+The underlying daemon writes screenshots to a file path. For remote callers, use `encoding: "base64"` to get image bytes inline:
+
+```bash
+curl -s -X POST http://localhost:3000/sessions/t1/commands \
+  -H 'Content-Type: application/json' \
+  -d '{"action":"screenshot","encoding":"base64"}'
+```
+
+The response includes `data.screenshot` as base64 (PNG by default).
+
 ## Commands
 
 ### Core Commands

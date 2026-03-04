@@ -53,6 +53,8 @@ agent-browser open https://example.com && agent-browser wait --load networkidle 
 
 For non-shell callers (e.g., Python services), use the HTTP bridge in `bridge/` to create sessions and send commands over HTTP. Prefer the CLI directly when you can, since it has the most complete UX and examples.
 
+Bridge tip: screenshots are written to a file path on the bridge host/container. For remote callers, send `{"action":"screenshot","encoding":"base64"}` and read `data.screenshot` (base64 PNG by default).
+
 ## Essential Commands
 
 ```bash

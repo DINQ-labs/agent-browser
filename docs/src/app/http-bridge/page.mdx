@@ -62,6 +62,18 @@ curl -s -X POST http://localhost:3000/sessions/t1/commands \
   -H 'Content-Type: application/json' \
   -d '{"action":"title"}'
 
-curl -s -X DELETE http://localhost:3000/sessions/t1
+## Screenshots
+
+The daemon writes screenshots to a file path on the bridge host/container.
+
+- File path (local to bridge): `{"action":"screenshot"}`
+- Bytes inline (remote-friendly): `{"action":"screenshot","encoding":"base64"}` → `data.screenshot`
+
+```bash
+curl -s -X POST http://localhost:3000/sessions/t1/commands \
+  -H 'Content-Type: application/json' \
+  -d '{"action":"screenshot","encoding":"base64"}'
 ```
 
+curl -s -X DELETE http://localhost:3000/sessions/t1
+```
