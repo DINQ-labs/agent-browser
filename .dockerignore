@@ -1,0 +1,14 @@
+node_modules/
+dist/
+bridge/node_modules/
+bridge/dist/
+cli/target/
+bin/agent-browser-*
+*.log
+.git/
+docs/
+test/
+opensrc/
+.env
+.env.local
+
