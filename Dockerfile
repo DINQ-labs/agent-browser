@@ -51,6 +51,9 @@ COPY bridge/package.json bridge/pnpm-lock.yaml bridge/tsconfig.json ./bridge/
 
 # Install deps first for better layer caching
 RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN BETTER_SQLITE_DIR="$(find node_modules/.pnpm -maxdepth 1 -type d -name 'better-sqlite3@*' | head -n1)/node_modules/better-sqlite3" \
+    && cd "$BETTER_SQLITE_DIR" \
+    && npm run install
 RUN pnpm -C bridge install --frozen-lockfile --ignore-scripts
 
 COPY src ./src
