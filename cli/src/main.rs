@@ -726,6 +726,12 @@ fn main() {
             cmd_obj.insert("storageState".to_string(), json!(state_path));
         }
 
+        if let Ok(runtime) = env::var("AGENT_BROWSER_RUNTIME") {
+            if runtime == "patchright" || runtime == "camoufox" {
+                cmd_obj.insert("runtime".to_string(), json!(runtime));
+            }
+        }
+
         if let Some(ref proxy_str) = flags.proxy {
             let mut proxy_obj = parse_proxy(proxy_str);
             // Add bypass if specified

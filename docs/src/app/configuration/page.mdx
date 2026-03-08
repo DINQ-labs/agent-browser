@@ -158,6 +158,22 @@ Extensions from user-level and project-level configs are **concatenated**, not r
 
 The `AGENT_BROWSER_EXTENSIONS` environment variable and CLI `--extension` flags follow the standard priority rules (env replaces config, CLI appends).
 
+## Runtime selection
+
+Patchright remains the default runtime. Runtime selection is currently **not** a config-file key or CLI flag. Use one of these entry points instead:
+
+<table>
+  <thead>
+    <tr><th>Path</th><th>How to select Camoufox</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Daemon / bridge env</td><td>Set <code>AGENT_BROWSER_RUNTIME=camoufox</code>.</td></tr>
+    <tr><td>HTTP bridge</td><td>Send <code>"runtime":"camoufox"</code> in <code>POST /sessions</code>.</td></tr>
+  </tbody>
+</table>
+
+Camoufox uses Firefox internally and rejects Chromium-only features such as extensions and <code>--allow-file-access</code>. If the runtime is not installed yet, run <code>npx camoufox-js fetch</code>.
+
 ## Environment Variables
 
 These environment variables configure additional daemon and runtime behavior:
@@ -169,6 +185,9 @@ These environment variables configure additional daemon and runtime behavior:
   <tbody>
     <tr><td><code>AGENT_BROWSER_AUTO_CONNECT</code></td><td>Auto-discover and connect to a running Chrome instance.</td><td>(disabled)</td></tr>
     <tr><td><code>AGENT_BROWSER_ALLOW_FILE_ACCESS</code></td><td>Allow <code>file://</code> URLs to access local files.</td><td>(disabled)</td></tr>
+    <tr><td><code>AGENT_BROWSER_RUNTIME</code></td><td>Browser runtime for daemon launches: <code>patchright</code> or <code>camoufox</code>.</td><td><code>patchright</code></td></tr>
+    <tr><td><code>AGENT_BROWSER_PROFILE</code></td><td>Persistent browser profile directory path.</td><td>(none)</td></tr>
+    <tr><td><code>AGENT_BROWSER_STATE</code></td><td>Storage state JSON file path.</td><td>(none)</td></tr>
     <tr><td><code>AGENT_BROWSER_STEALTH_WEBGL</code></td><td>Spoof WebGL vendor/renderer when SwiftShader is detected. Set to <code>0</code> to disable.</td><td>(enabled)</td></tr>
     <tr><td><code>AGENT_BROWSER_COLOR_SCHEME</code></td><td>Color scheme preference (<code>dark</code>, <code>light</code>, <code>no-preference</code>).</td><td>(none)</td></tr>
     <tr><td><code>AGENT_BROWSER_DOWNLOAD_PATH</code></td><td>Default directory for browser downloads.</td><td>(temp directory)</td></tr>
@@ -180,6 +199,7 @@ These environment variables configure additional daemon and runtime behavior:
     <tr><td><code>AGENT_BROWSER_IOS_DEVICE</code></td><td>Default iOS device name for the <code>ios</code> provider.</td><td>(none)</td></tr>
     <tr><td><code>AGENT_BROWSER_IOS_UDID</code></td><td>Default iOS device UDID for the <code>ios</code> provider.</td><td>(none)</td></tr>
     <tr><td><code>AGENT_BROWSER_DEBUG</code></td><td>Enable debug output (<code>1</code> to enable).</td><td>(disabled)</td></tr>
+    <tr><td><code>AGENT_BROWSER_USER_AGENT</code></td><td>Default user agent override for daemon launches.</td><td>(none)</td></tr>
     <tr><td><code>AGENT_BROWSER_CONTENT_BOUNDARIES</code></td><td>Wrap page output in boundary markers for LLM safety.</td><td>(disabled)</td></tr>
     <tr><td><code>AGENT_BROWSER_MAX_OUTPUT</code></td><td>Max characters for page output (truncates beyond limit).</td><td>(unlimited)</td></tr>
     <tr><td><code>AGENT_BROWSER_ALLOWED_DOMAINS</code></td><td>Comma-separated allowed domain patterns (e.g., <code>example.com,*.example.com</code>).</td><td>(unrestricted)</td></tr>

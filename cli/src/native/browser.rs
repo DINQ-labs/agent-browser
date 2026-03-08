@@ -17,6 +17,7 @@ use super::stealth;
 /// Validates launch/connect options for incompatible combinations.
 /// Returns `Ok(())` if valid, or `Err(msg)` with a user-friendly error.
 pub fn validate_launch_options(
+    runtime: Option<&str>,
     extensions: Option<&[String]>,
     has_cdp: bool,
     profile: Option<&str>,
@@ -25,6 +26,10 @@ pub fn validate_launch_options(
     executable_path: Option<&str>,
 ) -> Result<(), String> {
     let has_extensions = extensions.map(|e| !e.is_empty()).unwrap_or(false);
+
+    if runtime == Some("camoufox") {
+        return Err("Not yet implemented: camoufox runtime in native daemon".to_string());
+    }
 
     if has_extensions && has_cdp {
         return Err(
@@ -117,6 +122,7 @@ pub struct BrowserManager {
 impl BrowserManager {
     pub async fn launch(options: LaunchOptions) -> Result<Self, String> {
         validate_launch_options(
+            options.runtime.as_deref(),
             options.extensions.as_deref(),
             false,
             options.profile.as_deref(),
@@ -1034,17 +1040,18 @@ mod tests {
     #[test]
     fn test_validate_launch_options_extensions_and_cdp() {
         let ext = vec!["/path/to/ext".to_string()];
-        assert!(validate_launch_options(Some(&ext), true, None, None, false, None,).is_err());
+        assert!(validate_launch_options(None, Some(&ext), true, None, None, false, None,).is_err());
     }
 
     #[test]
     fn test_validate_launch_options_profile_and_cdp() {
-        assert!(validate_launch_options(None, true, Some("/path"), None, false, None,).is_err());
+        assert!(validate_launch_options(None, None, true, Some("/path"), None, false, None,).is_err());
     }
 
     #[test]
     fn test_validate_launch_options_storage_state_and_profile() {
         assert!(validate_launch_options(
+            None,
             None,
             false,
             Some("/profile"),
@@ -1059,7 +1066,7 @@ mod tests {
     fn test_validate_launch_options_storage_state_and_extensions() {
         let ext = vec!["/ext".to_string()];
         assert!(
-            validate_launch_options(Some(&ext), false, None, Some("/state.json"), false, None,)
+            validate_launch_options(None, Some(&ext), false, None, Some("/state.json"), false, None,)
                 .is_err()
         );
     }
@@ -1067,14 +1074,30 @@ mod tests {
     #[test]
     fn test_validate_launch_options_allow_file_access_firefox() {
         assert!(
-            validate_launch_options(None, false, None, None, true, Some("/usr/bin/firefox"),)
+            validate_launch_options(None, None, false, None, None, true, Some("/usr/bin/firefox"),)
                 .is_err()
         );
     }
 
     #[test]
+    fn test_validate_launch_options_camoufox_not_implemented() {
+        assert!(
+            validate_launch_options(
+                Some("camoufox"),
+                None,
+                false,
+                None,
+                None,
+                false,
+                None,
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
     fn test_validate_launch_options_valid() {
-        assert!(validate_launch_options(None, false, None, None, false, None,).is_ok());
+        assert!(validate_launch_options(None, None, false, None, None, false, None,).is_ok());
     }
 
     #[test]

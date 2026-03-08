@@ -55,6 +55,35 @@ For non-shell callers (e.g., Python services), use the HTTP bridge in `bridge/` 
 
 Bridge tip: screenshots are written to a file path on the bridge host/container. For remote callers, send `{"action":"screenshot","encoding":"base64"}` and read `data.screenshot` (base64 PNG by default).
 
+Bridge sessions also accept runtime/session state fields:
+
+- `runtime`: `patchright` (default) or `camoufox`
+- `profile`: persistent browser profile directory path
+- `storageState`: JSON file path or inline storage state object
+- `sessionName`: auto-save/load session state name
+
+Example:
+
+```bash
+curl -s -X POST http://localhost:3000/sessions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "session":"t1",
+    "runtime":"camoufox",
+    "profile":"/tmp/camoufox/linkedin_user_123",
+    "sessionName":"linkedin_user_123",
+    "storageState":{"cookies":[],"origins":[]},
+    "headless":true
+  }'
+```
+
+Camoufox notes:
+
+- Opt in with `runtime:"camoufox"` on the bridge or `AGENT_BROWSER_RUNTIME=camoufox` for daemon launches.
+- Camoufox uses Firefox internally and does not support Chromium-only features such as extensions and `--allow-file-access`.
+- If the runtime is not installed yet, run `npx camoufox-js fetch`.
+- Native Rust daemon launches currently return `Not yet implemented: camoufox runtime in native daemon`.
+
 ## Essential Commands
 
 ```bash

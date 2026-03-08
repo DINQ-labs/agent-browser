@@ -24,6 +24,7 @@ impl Drop for ChromeProcess {
 }
 
 pub struct LaunchOptions {
+    pub runtime: Option<String>,
     pub headless: bool,
     pub executable_path: Option<String>,
     pub proxy: Option<String>,
@@ -42,6 +43,7 @@ pub struct LaunchOptions {
 impl Default for LaunchOptions {
     fn default() -> Self {
         Self {
+            runtime: None,
             headless: true,
             executable_path: None,
             proxy: None,

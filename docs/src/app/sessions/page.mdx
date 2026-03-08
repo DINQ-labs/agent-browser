@@ -57,6 +57,8 @@ The profile directory stores:
 - Browser cache
 - Login sessions
 
+Bridge callers can pass the same profile path in `POST /sessions` with `"profile": "/path/to/profile"`.
+
 ## Session persistence
 
 Use `--session-name` to automatically save and restore cookies and localStorage across browser restarts:
@@ -74,6 +76,8 @@ agent-browser open twitter.com
 ```
 
 State files are stored in `~/.agent-browser/sessions/` and automatically loaded on daemon start.
+
+Bridge callers can set the same persistence handle with `"sessionName":"twitter"` in `POST /sessions`.
 
 ### Session name rules
 
@@ -192,5 +196,11 @@ agent-browser set headers '{"X-Custom-Header": "value"}'
     <tr><td><code>AGENT_BROWSER_SESSION_NAME</code></td><td>Auto-save/load state persistence name</td></tr>
     <tr><td><code>AGENT_BROWSER_ENCRYPTION_KEY</code></td><td>64-char hex key for AES-256-GCM encryption</td></tr>
     <tr><td><code>AGENT_BROWSER_STATE_EXPIRE_DAYS</code></td><td>Auto-delete states older than N days (default: 30)</td></tr>
+    <tr><td><code>AGENT_BROWSER_PROFILE</code></td><td>Persistent browser profile directory path</td></tr>
+    <tr><td><code>AGENT_BROWSER_STATE</code></td><td>Storage state JSON file path</td></tr>
   </tbody>
 </table>
+
+## Runtime-specific note
+
+If you launch sessions with `AGENT_BROWSER_RUNTIME=camoufox` or bridge `"runtime":"camoufox"`, the same profile and session persistence rules still apply. Camoufox uses Firefox internally and does not support Chromium-only features such as extensions and `--allow-file-access`.

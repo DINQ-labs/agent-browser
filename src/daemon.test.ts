@@ -3,7 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as net from 'net';
 import { EventEmitter } from 'events';
-import { getSocketDir, safeWrite } from './daemon.js';
+import { buildAutoLaunchCommandFromEnv, getSocketDir, safeWrite } from './daemon.js';
 
 /**
  * HTTP request detection pattern used in daemon.ts to prevent cross-origin attacks.
@@ -94,6 +94,30 @@ describe('getSocketDir', () => {
       const expected = path.join(os.homedir(), '.agent-browser');
       expect(result).toBe(expected);
     });
+  });
+});
+
+describe('buildAutoLaunchCommandFromEnv', () => {
+  const originalEnv = { ...process.env };
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it('includes runtime, profile, and storage state from env', () => {
+    process.env.AGENT_BROWSER_RUNTIME = 'camoufox';
+    process.env.AGENT_BROWSER_PROFILE = '/tmp/profile-path';
+    process.env.AGENT_BROWSER_STATE = '/tmp/state.json';
+    process.env.AGENT_BROWSER_USER_AGENT = 'ua';
+    process.env.AGENT_BROWSER_HEADED = '1';
+
+    const command = buildAutoLaunchCommandFromEnv();
+
+    expect(command.runtime).toBe('camoufox');
+    expect(command.profile).toBe('/tmp/profile-path');
+    expect(command.storageState).toBe('/tmp/state.json');
+    expect(command.userAgent).toBe('ua');
+    expect(command.headless).toBe(false);
   });
 });
 

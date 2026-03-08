@@ -123,6 +123,41 @@ curl -s -X POST http://localhost:3000/sessions/t1/commands \
 
 The response includes `data.screenshot` as base64 (PNG by default).
 
+### Create session with runtime, profile, and storage state
+
+`POST /sessions` accepts the daemon launch fields needed for long-lived account sessions:
+
+- `runtime`: `patchright` (default) or `camoufox`
+- `profile`: persistent profile directory path
+- `storageState`: JSON file path or inline storage state object
+- `sessionName`: auto-save/load state persistence name
+
+```bash
+curl -s -X POST http://localhost:3000/sessions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "session":"t1",
+    "runtime":"camoufox",
+    "profile":"/tmp/camoufox-profiles/linkedin_user_123",
+    "sessionName":"linkedin_user_123",
+    "storageState":{"cookies":[],"origins":[]},
+    "headless":true
+  }'
+```
+
+Inline `storageState` objects are written to a temporary file by the bridge and forwarded to the daemon through `AGENT_BROWSER_STATE`.
+
+## Runtime Selection
+
+Patchright remains the default runtime. Use Camoufox only when you explicitly opt in:
+
+- Daemon / bridge launches: set `AGENT_BROWSER_RUNTIME=camoufox` or send `"runtime":"camoufox"` to `POST /sessions`
+- Camoufox uses Firefox internally and rejects Chromium-only features such as extensions and `--allow-file-access`
+- Persistent sessions still work with `profile`, `storageState`, and `sessionName`
+- If the Camoufox binary is missing, install it with `npx camoufox-js fetch`
+
+The experimental native Rust daemon currently returns `Not yet implemented: camoufox runtime in native daemon` for Camoufox launches.
+
 ## Commands
 
 ### Core Commands
@@ -411,6 +446,8 @@ export AGENT_BROWSER_SESSION_NAME=twitter
 agent-browser open twitter.com
 ```
 
+Bridge callers can use the same persistence handle through `sessionName` in `POST /sessions`.
+
 ### State Encryption
 
 Encrypt saved session data at rest with AES-256-GCM:
@@ -532,6 +569,8 @@ This is useful for multimodal AI models that can reason about visual layout, unl
 | `--native` | [Experimental] Use native Rust daemon instead of Node.js (or `AGENT_BROWSER_NATIVE` env) |
 | `--config <path>` | Use a custom config file (or `AGENT_BROWSER_CONFIG` env) |
 | `--debug` | Debug output |
+
+Runtime selection for daemon-managed launches is env/bridge based: use `AGENT_BROWSER_RUNTIME=camoufox` or send `"runtime":"camoufox"` to the HTTP bridge. There is no dedicated CLI flag yet.
 
 ### Stealth (WebGL)
 

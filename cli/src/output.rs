@@ -2475,6 +2475,9 @@ Configuration:
 Environment:
   AGENT_BROWSER_CONFIG           Path to config file (or use --config)
   AGENT_BROWSER_SESSION          Session name (default: "default")
+  AGENT_BROWSER_RUNTIME          Browser runtime for daemon launches: patchright or camoufox
+  AGENT_BROWSER_PROFILE          Persistent browser profile directory
+  AGENT_BROWSER_STATE            Storage state JSON file path
   AGENT_BROWSER_SESSION_NAME     Auto-save/restore state persistence name
   AGENT_BROWSER_ENCRYPTION_KEY   64-char hex key for AES-256-GCM state encryption
   AGENT_BROWSER_STATE_EXPIRE_DAYS Auto-delete states older than N days (default: 30)
@@ -2490,6 +2493,7 @@ Environment:
   AGENT_BROWSER_PROVIDER         Browser provider (ios, browserbase, kernel, browseruse)
   AGENT_BROWSER_AUTO_CONNECT     Auto-discover and connect to running Chrome
   AGENT_BROWSER_ALLOW_FILE_ACCESS Allow file:// URLs to access local files
+  AGENT_BROWSER_USER_AGENT       Custom User-Agent string
   AGENT_BROWSER_COLOR_SCHEME     Color scheme preference (dark, light, no-preference)
   AGENT_BROWSER_DOWNLOAD_PATH    Default download directory for browser downloads
   AGENT_BROWSER_DEFAULT_TIMEOUT  Default Playwright timeout in ms (default: 25000)
@@ -2529,6 +2533,11 @@ Examples:
   agent-browser --color-scheme dark open example.com  # Dark mode
   agent-browser --profile ~/.myapp open example.com    # Persistent profile
   agent-browser --session-name myapp open example.com  # Auto-save/restore state
+
+Bridge Runtime:
+  AGENT_BROWSER_RUNTIME=camoufox agent-browser snapshot
+  curl -s -X POST http://localhost:3000/sessions -H 'Content-Type: application/json' \\
+    -d '{"session":"t1","runtime":"camoufox","profile":"/tmp/camoufox","storageState":{"cookies":[],"origins":[]}}'
 
 Command Chaining:
   Chain commands with && in a single shell call (browser persists via daemon):

@@ -17,6 +17,7 @@ import {
   cleanupExpiredStates,
   getAutoStateFilePath,
 } from './state-utils.js';
+import type { LaunchCommand } from './types.js';
 
 // Manager type - either desktop browser or iOS
 type Manager = BrowserManager | IOSManager;
@@ -179,6 +180,59 @@ export function setSession(session: string): void {
  */
 export function getSession(): string {
   return currentSession;
+}
+
+export function buildAutoLaunchCommandFromEnv(): LaunchCommand {
+  const extensions = process.env.AGENT_BROWSER_EXTENSIONS
+    ? process.env.AGENT_BROWSER_EXTENSIONS.split(',')
+        .map((p) => p.trim())
+        .filter(Boolean)
+    : undefined;
+
+  const argsEnv = process.env.AGENT_BROWSER_ARGS;
+  const args = argsEnv
+    ? argsEnv
+        .split(/[,\n]/)
+        .map((a) => a.trim())
+        .filter((a) => a.length > 0)
+    : undefined;
+
+  const proxyServer = process.env.AGENT_BROWSER_PROXY;
+  const proxyBypass = process.env.AGENT_BROWSER_PROXY_BYPASS;
+  const proxy = proxyServer
+    ? {
+        server: proxyServer,
+        ...(proxyBypass && { bypass: proxyBypass }),
+      }
+    : undefined;
+
+  const ignoreHTTPSErrors = process.env.AGENT_BROWSER_IGNORE_HTTPS_ERRORS === '1';
+  const allowFileAccess = process.env.AGENT_BROWSER_ALLOW_FILE_ACCESS === '1';
+  const colorSchemeEnv = process.env.AGENT_BROWSER_COLOR_SCHEME;
+  const colorScheme =
+    colorSchemeEnv === 'dark' || colorSchemeEnv === 'light' || colorSchemeEnv === 'no-preference'
+      ? colorSchemeEnv
+      : undefined;
+  const runtimeEnv = process.env.AGENT_BROWSER_RUNTIME;
+  const runtime = runtimeEnv === 'camoufox' || runtimeEnv === 'patchright' ? runtimeEnv : undefined;
+
+  return {
+    id: 'auto',
+    action: 'launch',
+    runtime,
+    headless: process.env.AGENT_BROWSER_HEADED !== '1',
+    executablePath: process.env.AGENT_BROWSER_EXECUTABLE_PATH,
+    extensions,
+    profile: process.env.AGENT_BROWSER_PROFILE,
+    storageState: process.env.AGENT_BROWSER_STATE,
+    args,
+    userAgent: process.env.AGENT_BROWSER_USER_AGENT,
+    proxy,
+    ignoreHTTPSErrors,
+    allowFileAccess,
+    colorScheme,
+    autoStateFilePath: getSessionAutoStatePath(),
+  };
 }
 
 /**
@@ -431,56 +485,7 @@ export async function startDaemon(options?: {
               });
             } else if (manager instanceof BrowserManager) {
               // Auto-launch desktop browser
-              const extensions = process.env.AGENT_BROWSER_EXTENSIONS
-                ? process.env.AGENT_BROWSER_EXTENSIONS.split(',')
-                    .map((p) => p.trim())
-                    .filter(Boolean)
-                : undefined;
-
-              // Parse args from env (comma or newline separated)
-              const argsEnv = process.env.AGENT_BROWSER_ARGS;
-              const args = argsEnv
-                ? argsEnv
-                    .split(/[,\n]/)
-                    .map((a) => a.trim())
-                    .filter((a) => a.length > 0)
-                : undefined;
-
-              // Parse proxy from env
-              const proxyServer = process.env.AGENT_BROWSER_PROXY;
-              const proxyBypass = process.env.AGENT_BROWSER_PROXY_BYPASS;
-              const proxy = proxyServer
-                ? {
-                    server: proxyServer,
-                    ...(proxyBypass && { bypass: proxyBypass }),
-                  }
-                : undefined;
-
-              const ignoreHTTPSErrors = process.env.AGENT_BROWSER_IGNORE_HTTPS_ERRORS === '1';
-              const allowFileAccess = process.env.AGENT_BROWSER_ALLOW_FILE_ACCESS === '1';
-              const colorSchemeEnv = process.env.AGENT_BROWSER_COLOR_SCHEME;
-              const colorScheme =
-                colorSchemeEnv === 'dark' ||
-                colorSchemeEnv === 'light' ||
-                colorSchemeEnv === 'no-preference'
-                  ? colorSchemeEnv
-                  : undefined;
-              await manager.launch({
-                id: 'auto',
-                action: 'launch' as const,
-                headless: process.env.AGENT_BROWSER_HEADED !== '1',
-                executablePath: process.env.AGENT_BROWSER_EXECUTABLE_PATH,
-                extensions: extensions,
-                profile: process.env.AGENT_BROWSER_PROFILE,
-                storageState: process.env.AGENT_BROWSER_STATE,
-                args,
-                userAgent: process.env.AGENT_BROWSER_USER_AGENT,
-                proxy,
-                ignoreHTTPSErrors: ignoreHTTPSErrors,
-                allowFileAccess: allowFileAccess,
-                colorScheme,
-                autoStateFilePath: getSessionAutoStatePath(),
-              });
+              await manager.launch(buildAutoLaunchCommandFromEnv());
             }
           }
 

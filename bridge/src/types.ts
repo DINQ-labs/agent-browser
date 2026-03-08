@@ -1,5 +1,17 @@
 export interface CreateSessionRequest {
   session: string;
+  /** Optional browser runtime. Patchright remains the default. */
+  runtime?: 'patchright' | 'camoufox';
+  /** Persistent browser profile directory path. */
+  profile?: string;
+  /** Storage state JSON file path or inline storage state object. */
+  storageState?: string | {
+    cookies?: unknown[];
+    origins?: unknown[];
+    [key: string]: unknown;
+  };
+  /** Auto-save/load state persistence name for the daemon. */
+  sessionName?: string;
   proxy?: {
     server: string;
     bypass?: string;

@@ -77,3 +77,46 @@ curl -s -X POST http://localhost:3000/sessions/t1/commands \
 
 curl -s -X DELETE http://localhost:3000/sessions/t1
 ```
+
+## Session launch fields
+
+`POST /sessions` accepts the same daemon launch fields used by `agent-browser` internally.
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>runtime</code></td><td><code>patchright</code> (default) or <code>camoufox</code>.</td></tr>
+    <tr><td><code>profile</code></td><td>Persistent browser profile directory path.</td></tr>
+    <tr><td><code>storageState</code></td><td>Either a JSON file path or an inline storage state object.</td></tr>
+    <tr><td><code>sessionName</code></td><td>Auto-save/load state persistence name.</td></tr>
+    <tr><td><code>userAgent</code></td><td>Override user agent for the session.</td></tr>
+    <tr><td><code>viewport</code></td><td>Initial viewport size for the session.</td></tr>
+  </tbody>
+</table>
+
+Example:
+
+```bash
+curl -s -X POST http://localhost:3000/sessions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "session":"t1",
+    "runtime":"camoufox",
+    "profile":"/tmp/camoufox/linkedin_user_123",
+    "sessionName":"linkedin_user_123",
+    "storageState":{"cookies":[],"origins":[]},
+    "headless":true
+  }'
+```
+
+Inline <code>storageState</code> objects are written to a temporary file by the bridge and forwarded to the daemon through <code>AGENT_BROWSER_STATE</code>.
+
+## Camoufox runtime
+
+- Patchright remains the default runtime.
+- Set <code>"runtime":"camoufox"</code> only when you explicitly want the Camoufox Firefox runtime.
+- Camoufox does not support Chromium-only features such as extensions and <code>--allow-file-access</code>.
+- If the Camoufox binary is missing, install it with <code>npx camoufox-js fetch</code>.
+- The experimental native Rust daemon currently returns <code>Not yet implemented: camoufox runtime in native daemon</code> for Camoufox launches.

@@ -9,6 +9,8 @@ export interface BaseCommand {
 // Action-specific command types
 export interface LaunchCommand extends BaseCommand {
   action: 'launch';
+  /** Browser runtime. Patchright is default; Camoufox maps to Firefox internally. */
+  runtime?: 'patchright' | 'camoufox';
   headless?: boolean;
   viewport?: { width: number; height: number } | null;
   browser?: 'chromium' | 'firefox' | 'webkit';

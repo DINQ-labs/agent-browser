@@ -2,6 +2,11 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } 
 import { BrowserManager, getDefaultTimeout } from './browser.js';
 import { executeCommand } from './actions.js';
 import { chromium } from 'patchright';
+import {
+  resolveRuntime,
+  getBrowserTypeForRuntime,
+  validateRuntimeCompatibility,
+} from './runtime.js';
 
 describe('BrowserManager', () => {
   let browser: BrowserManager;
@@ -1218,6 +1223,37 @@ describe('BrowserManager', () => {
         })
       ).resolves.not.toThrow();
     });
+  });
+});
+
+describe('runtime adapter', () => {
+  it('defaults to patchright runtime', () => {
+    expect(resolveRuntime()).toBe('patchright');
+  });
+
+  it('allows explicit camoufox runtime', () => {
+    expect(resolveRuntime('camoufox')).toBe('camoufox');
+    expect(getBrowserTypeForRuntime('camoufox')).toBe('firefox');
+  });
+
+  it('rejects chromium-only features for camoufox runtime', () => {
+    expect(() =>
+      validateRuntimeCompatibility({
+        runtime: 'camoufox',
+        browserType: 'chromium',
+        hasExtensions: false,
+        allowFileAccess: false,
+      })
+    ).toThrow(/Camoufox runtime only supports Firefox/);
+
+    expect(() =>
+      validateRuntimeCompatibility({
+        runtime: 'camoufox',
+        browserType: 'firefox',
+        hasExtensions: true,
+        allowFileAccess: false,
+      })
+    ).toThrow(/Camoufox runtime does not support Chromium-only features/);
   });
 });
 

@@ -10,6 +10,7 @@ const baseCommandSchema = z.object({
 // Individual action schemas
 const launchSchema = baseCommandSchema.extend({
   action: z.literal('launch'),
+  runtime: z.enum(['patchright', 'camoufox']).optional(),
   headless: z.boolean().optional(),
   viewport: z
     .object({

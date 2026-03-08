@@ -62,6 +62,94 @@ interface ManagedSession {
   lastUsed: Date;
   socketDir: string;
   socketPath: string;
+  transientStorageStatePath?: string;
+}
+
+export interface PreparedDaemonLaunchConfig {
+  env: Record<string, string>;
+  stateLoadPath?: string;
+  transientStorageStatePath?: string;
+  deferStorageStateLoad?: boolean;
+  cleanup: () => void;
+}
+
+export async function prepareDaemonLaunchConfig(
+  req: CreateSessionRequest,
+  socketDir: string
+): Promise<PreparedDaemonLaunchConfig> {
+  const env: Record<string, string> = {
+    ...(process.env as Record<string, string>),
+    AGENT_BROWSER_SESSION: req.session,
+    AGENT_BROWSER_SOCKET_DIR: socketDir,
+  };
+
+  if (req.headless === false) {
+    env.AGENT_BROWSER_HEADED = '1';
+  } else {
+    delete env.AGENT_BROWSER_HEADED;
+  }
+
+  if (req.userAgent) {
+    env.AGENT_BROWSER_USER_AGENT = req.userAgent;
+  }
+
+  if (req.runtime) {
+    env.AGENT_BROWSER_RUNTIME = req.runtime;
+  }
+
+  if (req.profile) {
+    env.AGENT_BROWSER_PROFILE = req.profile;
+  }
+
+  if (req.sessionName) {
+    env.AGENT_BROWSER_SESSION_NAME = req.sessionName;
+  }
+
+  if (req.proxy) {
+    env.AGENT_BROWSER_PROXY = buildProxyUrl(req.proxy);
+    if (req.proxy.bypass) {
+      env.AGENT_BROWSER_PROXY_BYPASS = req.proxy.bypass;
+    }
+  }
+
+  let stateLoadPath: string | undefined;
+  let transientStorageStatePath: string | undefined;
+  let deferStorageStateLoad = false;
+  if (typeof req.storageState === 'string') {
+    stateLoadPath = req.storageState;
+    if (req.profile) {
+      deferStorageStateLoad = true;
+    } else {
+      env.AGENT_BROWSER_STATE = req.storageState;
+    }
+  } else if (req.storageState) {
+    transientStorageStatePath = path.join(
+      os.tmpdir(),
+      `agent-browser-bridge-state-${req.session}-${Date.now()}.json`
+    );
+    fs.writeFileSync(transientStorageStatePath, JSON.stringify(req.storageState), 'utf8');
+    stateLoadPath = transientStorageStatePath;
+    if (req.profile) {
+      deferStorageStateLoad = true;
+    } else {
+      env.AGENT_BROWSER_STATE = transientStorageStatePath;
+    }
+  }
+
+  return {
+    env,
+    stateLoadPath,
+    transientStorageStatePath,
+    deferStorageStateLoad,
+    cleanup: () => {
+      if (!transientStorageStatePath) return;
+      try {
+        fs.unlinkSync(transientStorageStatePath);
+      } catch {
+        // ignore
+      }
+    },
+  };
 }
 
 export class SessionManager {
@@ -153,31 +241,10 @@ export class SessionManager {
 
     const daemonPath = fileURLToPath(new URL('../../dist/daemon.js', import.meta.url));
 
-    const env: Record<string, string> = {
-      ...(process.env as Record<string, string>),
-      AGENT_BROWSER_SESSION: sessionId,
-      AGENT_BROWSER_SOCKET_DIR: this.socketDir,
-    };
-
-    if (req.headless === false) {
-      env.AGENT_BROWSER_HEADED = '1';
-    } else {
-      delete env.AGENT_BROWSER_HEADED;
-    }
-
-    if (req.userAgent) {
-      env.AGENT_BROWSER_USER_AGENT = req.userAgent;
-    }
-
-    if (req.proxy) {
-      env.AGENT_BROWSER_PROXY = buildProxyUrl(req.proxy);
-      if (req.proxy.bypass) {
-        env.AGENT_BROWSER_PROXY_BYPASS = req.proxy.bypass;
-      }
-    }
+    const prepared = await prepareDaemonLaunchConfig(req, this.socketDir);
 
     const child = spawn('node', [daemonPath], {
-      env,
+      env: prepared.env,
       stdio: 'inherit',
       detached: false,
     });
@@ -198,6 +265,7 @@ export class SessionManager {
       } catch {
         // ignore
       }
+      prepared.cleanup();
     });
 
     await this.waitForSocket(socketPath, this.daemonStartupTimeoutMs);
@@ -210,11 +278,15 @@ export class SessionManager {
       lastUsed: new Date(),
       socketDir: this.socketDir,
       socketPath,
+      transientStorageStatePath: prepared.transientStorageStatePath,
     };
 
     this.sessions.set(sessionId, managed);
 
     // Apply post-launch configuration. These commands will auto-launch the browser on first use.
+    if (prepared.deferStorageStateLoad && prepared.stateLoadPath) {
+      await this.sendCommand(sessionId, { action: 'state_load', path: prepared.stateLoadPath });
+    }
     if (req.headers) {
       await this.sendCommand(sessionId, { action: 'headers', headers: req.headers });
     }
@@ -240,6 +312,13 @@ export class SessionManager {
     await this.waitForExit(session.process, 2_000).catch(() => {});
     if (!session.process.killed) {
       session.process.kill('SIGKILL');
+    }
+    if (session.transientStorageStatePath) {
+      try {
+        fs.unlinkSync(session.transientStorageStatePath);
+      } catch {
+        // ignore
+      }
     }
     this.sessions.delete(sessionId);
   }
@@ -356,4 +435,3 @@ export class SessionManager {
     }
   }
 }
-

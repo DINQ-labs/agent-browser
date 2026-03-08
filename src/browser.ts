@@ -1,7 +1,5 @@
 import {
   chromium,
-  firefox,
-  webkit,
   devices,
   type Browser,
   type BrowserContext,
@@ -29,6 +27,7 @@ import {
   ENCRYPTION_KEY_ENV,
 } from './state-utils.js';
 import { isWebglStealthEnabled, WEBGL_STEALTH_INIT_SCRIPT } from './stealth-webgl.js';
+import { getRuntimeLauncher } from './runtime.js';
 
 /**
  * Returns the default Playwright timeout in milliseconds for standard operations.
@@ -1308,7 +1307,8 @@ export class BrowserManager {
       this.downloadPath = resolved;
     }
 
-    const browserType = options.browser ?? 'chromium';
+    const runtimeLauncher = await getRuntimeLauncher(options);
+    const browserType = runtimeLauncher.browserType;
     if (hasExtensions && browserType !== 'chromium') {
       throw new Error('Extensions are only supported in Chromium');
     }
@@ -1317,9 +1317,6 @@ export class BrowserManager {
     if (options.allowFileAccess && browserType !== 'chromium') {
       throw new Error('allowFileAccess is only supported in Chromium');
     }
-
-    const launcher =
-      browserType === 'firefox' ? firefox : browserType === 'webkit' ? webkit : chromium;
 
     // Build base args array with file access flags if enabled
     // --allow-file-access-from-files: allows file:// URLs to read other file:// URLs via XHR/fetch
@@ -1353,7 +1350,7 @@ export class BrowserManager {
       // Combine extension args with custom args and file access args
       const extArgs = [`--disable-extensions-except=${extPaths}`, `--load-extension=${extPaths}`];
       const allArgs = baseArgs ? [...extArgs, ...baseArgs] : extArgs;
-      context = await launcher.launchPersistentContext(
+      context = await runtimeLauncher.launchPersistentContext(
         path.join(os.tmpdir(), `agent-browser-ext-${session}`),
         {
           headless: false,
@@ -1373,7 +1370,7 @@ export class BrowserManager {
       // Profile uses persistent context for durable cookies/storage
       // Expand ~ to home directory since it won't be shell-expanded
       const profilePath = options.profile!.replace(/^~\//, os.homedir() + '/');
-      context = await launcher.launchPersistentContext(profilePath, {
+      context = await runtimeLauncher.launchPersistentContext(profilePath, {
         headless: options.headless ?? true,
         executablePath: options.executablePath,
         args: baseArgs,
@@ -1388,7 +1385,7 @@ export class BrowserManager {
       this.isPersistentContext = true;
     } else {
       // Regular ephemeral browser
-      this.browser = await launcher.launch({
+      this.browser = await runtimeLauncher.launch({
         headless: options.headless ?? true,
         executablePath: options.executablePath,
         args: baseArgs,
