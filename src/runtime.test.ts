@@ -59,6 +59,7 @@ describe('getRuntimeLauncher', () => {
 
     await launcher.launch({
       headless: true,
+      executablePath: undefined,
       args: ['--agent-browser'],
       env: { APP_ENV: 'test' },
       proxy: { server: 'http://proxy.local:8080' },
@@ -93,6 +94,7 @@ describe('getRuntimeLauncher', () => {
 
     await launcher.launchPersistentContext('/tmp/camoufox-profile', {
       headless: true,
+      executablePath: undefined,
       viewport: { width: 1280, height: 720 },
       userAgent: 'agent-browser-test',
     });

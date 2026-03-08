@@ -21,17 +21,22 @@ export interface RuntimeLauncher {
   ) => Promise<BrowserContext>;
 }
 
+function stripUndefinedValues(options: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(options).filter(([, value]) => value !== undefined));
+}
+
 function mergeCamoufoxLaunchOptions(
   camoufoxOptions: Record<string, unknown>,
   playwrightOptions: Record<string, unknown>
 ): Record<string, unknown> {
+  const definedPlaywrightOptions = stripUndefinedValues(playwrightOptions);
   const merged: Record<string, unknown> = {
     ...camoufoxOptions,
-    ...playwrightOptions,
+    ...definedPlaywrightOptions,
   };
 
   const camoufoxEnv = camoufoxOptions.env as Record<string, string> | undefined;
-  const playwrightEnv = playwrightOptions.env as Record<string, string> | undefined;
+  const playwrightEnv = definedPlaywrightOptions.env as Record<string, string> | undefined;
   if (camoufoxEnv || playwrightEnv) {
     merged.env = {
       ...(camoufoxEnv ?? {}),
@@ -42,7 +47,7 @@ function mergeCamoufoxLaunchOptions(
   const camoufoxFirefoxPrefs = camoufoxOptions.firefoxUserPrefs as
     | Record<string, unknown>
     | undefined;
-  const playwrightFirefoxPrefs = playwrightOptions.firefoxUserPrefs as
+  const playwrightFirefoxPrefs = definedPlaywrightOptions.firefoxUserPrefs as
     | Record<string, unknown>
     | undefined;
   if (camoufoxFirefoxPrefs || playwrightFirefoxPrefs) {
