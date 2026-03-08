@@ -60,8 +60,9 @@ COPY bridge/src ./bridge/src
 RUN pnpm run build
 RUN pnpm -C bridge run build
 
-# Download browser binaries into the image
-RUN pnpm exec patchright install chromium
+# Download browser runtimes into the image
+RUN pnpm exec patchright install chromium \
+    && pnpm exec camoufox-js fetch
 
 ENV NODE_ENV=production
 
