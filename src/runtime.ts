@@ -21,6 +21,40 @@ export interface RuntimeLauncher {
   ) => Promise<BrowserContext>;
 }
 
+function mergeCamoufoxLaunchOptions(
+  camoufoxOptions: Record<string, unknown>,
+  playwrightOptions: Record<string, unknown>
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = {
+    ...camoufoxOptions,
+    ...playwrightOptions,
+  };
+
+  const camoufoxEnv = camoufoxOptions.env as Record<string, string> | undefined;
+  const playwrightEnv = playwrightOptions.env as Record<string, string> | undefined;
+  if (camoufoxEnv || playwrightEnv) {
+    merged.env = {
+      ...(camoufoxEnv ?? {}),
+      ...(playwrightEnv ?? {}),
+    };
+  }
+
+  const camoufoxFirefoxPrefs = camoufoxOptions.firefoxUserPrefs as
+    | Record<string, unknown>
+    | undefined;
+  const playwrightFirefoxPrefs = playwrightOptions.firefoxUserPrefs as
+    | Record<string, unknown>
+    | undefined;
+  if (camoufoxFirefoxPrefs || playwrightFirefoxPrefs) {
+    merged.firefoxUserPrefs = {
+      ...(camoufoxFirefoxPrefs ?? {}),
+      ...(playwrightFirefoxPrefs ?? {}),
+    };
+  }
+
+  return merged;
+}
+
 export function resolveRuntime(runtime?: string): BrowserRuntime {
   return runtime === 'camoufox' ? 'camoufox' : 'patchright';
 }
@@ -65,16 +99,34 @@ export async function getRuntimeLauncher(
   });
 
   if (runtime === 'camoufox') {
-    const { Camoufox } = await import('camoufox-js');
+    const [{ firefox: playwrightFirefox }, { launchOptions: getCamoufoxLaunchOptions }] =
+      await Promise.all([import('playwright-core'), import('camoufox-js')]);
+
+    const buildCamoufoxOptions = async (launchOptions: Record<string, unknown>) => {
+      const executablePath =
+        typeof launchOptions.executablePath === 'string' ? launchOptions.executablePath : undefined;
+      const camoufoxOptions = await getCamoufoxLaunchOptions({
+        headless: launchOptions.headless as boolean | undefined,
+        args: launchOptions.args as string[] | undefined,
+        env: launchOptions.env as Record<string, string> | undefined,
+        proxy: launchOptions.proxy as Record<string, unknown> | undefined,
+        executable_path: executablePath,
+      });
+      return mergeCamoufoxLaunchOptions(camoufoxOptions as Record<string, unknown>, launchOptions);
+    };
+
     return {
       runtime,
       browserType,
-      launch: async (launchOptions) => (await Camoufox(launchOptions)) as unknown as Browser,
+      launch: async (launchOptions) =>
+        (await playwrightFirefox.launch(
+          (await buildCamoufoxOptions(launchOptions)) as any
+        )) as unknown as Browser,
       launchPersistentContext: async (userDataDir, launchOptions) =>
-        (await Camoufox({
-          ...launchOptions,
-          user_data_dir: userDataDir,
-        })) as unknown as BrowserContext,
+        (await playwrightFirefox.launchPersistentContext(
+          userDataDir,
+          (await buildCamoufoxOptions(launchOptions)) as any
+        )) as unknown as BrowserContext,
     };
   }
 
